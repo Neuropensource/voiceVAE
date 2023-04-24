@@ -36,6 +36,7 @@ if __name__ == "__main__":
     spectros = SpectroDataset(all_wav) 
     data_loader = DataLoader(spectros,batch_size=32,shuffle=True)
 
+
     #MODEL INITIALIZATION
     # encoder = ConvolutionalEncoder(z_dim=16)
     # bottleneck = VariationalBottleneck(z_dim=16)
@@ -57,15 +58,24 @@ if __name__ == "__main__":
     #TRAINING LOOP
     for epoch in range(num_epochs):
         #train
+        print("Starting epoch {}".format(epoch+1))
+        modelAE.train()
+        num_batch = 0
         for batch in data_loader:
             recon = modelAE(batch)
             loss = criterion(recon, batch)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            num_batch += 1
+            if num_batch % 100 == 0:
+                print(num_batch, 'over', len(data_loader), 'batches done')
+                
 
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
         outputs.append((epoch, batch, recon))
+        print('torch is using', torch.cuda.device_count(), 'GPUs')
+        
 
         #eval
         modelAE.eval()
@@ -76,6 +86,10 @@ if __name__ == "__main__":
                 val_losses.append(loss)
         val_loss = torch.mean(torch.stack(val_losses))
         print(f'[epoch={epoch+1}] val loss: {val_loss.item()}')
+
+        #SAVE MODEL
+        torch.save(modelAE.state_dict(), "modelsParam/ep{}modelAE.pth".format(epoch+1))
+
     
   
 
