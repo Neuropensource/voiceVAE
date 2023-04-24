@@ -22,7 +22,11 @@ from models.simpleAE import AE1D
 
 #All informations from config files are stored in the following variables
 TRAINING_CONFIG = {}
-DATA_CONFIG = {}
+#on local machine
+#DATA_CONFIG = {"DATAPATH" : "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+#on clusterSMS
+DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+
 MODEL_CONFIG = {}
 
 
@@ -30,7 +34,7 @@ if __name__ == "__main__":
 
     #DATA INITIALIZATION
     np.random.seed(1234)
-    folder_path = "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"
+    folder_path = DATA_CONFIG["DATAPATH"]
     all_wav = make_path(folder_path)
     np.random.shuffle(all_wav)
     spectros = SpectroDataset(all_wav) 
