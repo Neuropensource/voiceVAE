@@ -1,13 +1,13 @@
 # !/bin/bash
-# SBATCH --partition=partition
-# SBATCH --nodes=Nnodes
-# SBATCH --ntasks-per-node=Ntasks
-# SBATCH --gres=gpu:Ngpus
-# SBATCH --cpus-per-task=Ncpus
-# SBATCH --job-name="JobName"
-# SBATCH --time=TIME
+# SBATCH --partition=besteffort
+# SBATCH --nodes=1
+# SBATCH --ntasks-per-node=3
+# SBATCH --gres=gpu:1
+# SBATCH --cpus-per-task=1
+# SBATCH --job-name="spectroVAE"
+# SBATCH --time=3:00:00
 # SBATCH --output="output_screen"
 # SBATCH --error="output_error"
 # echo " $SLURM_ARRAY_TASK_ID "
 conda activate charly
-srun python file.py 
+srun python trainingSimple.py 
