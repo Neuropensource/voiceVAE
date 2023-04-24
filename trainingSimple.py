@@ -23,9 +23,9 @@ from models.simpleAE import AE1D
 #All informations from config files are stored in the following variables
 TRAINING_CONFIG = {}
 #on local machine
-#DATA_CONFIG = {"DATAPATH" : "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+DATA_CONFIG = {"DATAPATH" : "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
 #on clusterSMS
-DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+#DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
 
 MODEL_CONFIG = {}
 
