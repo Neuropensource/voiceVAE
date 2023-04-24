@@ -9,5 +9,5 @@
 #SBATCH --output="output_screen"
 #SBATCH --error="output_error"
 # echo " $SLURM_ARRAY_TASK_ID "
-conda activate charly
+conda activate voiceVAE
 srun python trainingSimple.py 
