@@ -4,6 +4,7 @@
 import os 
 import numpy as np
 import tqdm
+import argparse
 
 #---deep learning imports---
 import torch
@@ -18,19 +19,38 @@ from models.modules.CNNdecoder import ConvolutionalDecoder
 from models.modules.CNNencoder import ConvolutionalEncoder
 from models.simpleAE import AE1D
 
+#PARSER
+# parser = argparse.ArgumentParser(description='device')
+# # on ajoute un argument pour le device 
+# parser.add_argument('integers', metavar='N', type=int, nargs='+',
+#                     help='an integer for the accumulator')
+
 
 
 #All informations from config files are stored in the following variables
 TRAINING_CONFIG = {}
-#on local machine
-#DATA_CONFIG = {"DATAPATH" : "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
-#on clusterSMS
-DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
-
 MODEL_CONFIG = {}
 
+#on local machine or on clusterSMS
+# if parser[]:
+#     DATA_CONFIG = {"DATAPATH" : "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+# elif parser[]:
+#     DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+# else:
+#     raise AssertionError "wrong datapath"
+
+#DATA_CONFIG = {"DATAPATH" : "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
 
 if __name__ == "__main__":
+
+    #RECORD FROM THE CLUSTER
+    print("cluster hello-world") 
+    import time 
+    time.sleep(15)
+    print("test")
+    #tensorboard, start session, a configurer
+    #autres methodes ?
 
     #DATA INITIALIZATION
     np.random.seed(1234)
@@ -85,7 +105,7 @@ if __name__ == "__main__":
         modelAE.eval()
         val_losses = []
         with torch.no_grad():
-            for batch in tqdm(data_loader, desc=str(epoch), leave=False):
+            for batch in tqdm(data_loader):
                 loss = criterion(modelAE(batch), batch)
                 val_losses.append(loss)
         val_loss = torch.mean(torch.stack(val_losses))
