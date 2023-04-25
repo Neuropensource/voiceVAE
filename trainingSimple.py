@@ -11,6 +11,7 @@ import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 #---local imports---
 from downloader import SpectroDataset, make_path
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     folder_path = DATA_CONFIG["DATAPATH"]
     all_wav = make_path(folder_path)
     if args.partial:
-        all_wav = all_wav[:2000]
+        all_wav = all_wav[:10000]
     np.random.shuffle(all_wav)
     spectros = SpectroDataset(all_wav) 
     data_loader = DataLoader(spectros,batch_size=32,shuffle=True)
@@ -75,22 +76,30 @@ if __name__ == "__main__":
 
     
     # TRAINING INITIALIZATION
+    print('nb GPU available : ',torch.cuda.device_count())
+    #print('nom du GPU utilisé' : torch.cuda.get_device_name(0))
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print('used device =', device)
     modelAE.to(device)
+
     num_epochs = 5
     optimizer = torch.optim.Adam(modelAE.parameters(), betas=[0.5, 0.999], lr=0.00005)
     #optimizer = torch.optim.Adam(modelAE.parameters(),lr=1e-3, weight_decay=1e-5)
-    outputs = []
     criterion = nn.MSELoss()
+    outputs = []
     
     
+    #TENSORBOARD INITIALIZATION
+    writer = SummaryWriter(f"logs/model-{time.asctime()}")
     
     #TRAINING LOOP
     for epoch in range(num_epochs):
+
         #train
         print("Starting epoch {}".format(epoch+1))
         modelAE.train()
         num_batch = 0
+        cumloss = 0
         for batch in data_loader:
             batch = batch.to(device)
             recon = modelAE(batch)
@@ -99,15 +108,13 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
             num_batch += 1
-            # if num_batch % 100 == 0:
-            #     print(num_batch, 'over', len(data_loader), 'batches done')
-                
-
+            cumloss += loss.item()
+        #monitoring      
+        writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
-        outputs.append((epoch, batch, recon))
         print('torch is using', torch.cuda.device_count(), 'GPUs')
+        outputs.append((epoch, batch, recon))
         
-
         #eval
         modelAE.eval()
         val_losses = []
@@ -117,10 +124,12 @@ if __name__ == "__main__":
                 loss = criterion(modelAE(batch), batch)
                 val_losses.append(loss)
         val_loss = torch.mean(torch.stack(val_losses))
+        #monitoring
         print(f'[epoch={epoch+1}] val loss: {val_loss.item()}')
+        writer.add_scalar("loss/val loss", val_loss, epoch)
 
         #SAVE MODEL
-        torch.save(modelAE.state_dict(), "modelsParam/ep{}modelAE.pth".format(epoch+1))
+        torch.save(modelAE.state_dict(), "modelsParam/ep{}AE1D.pth".format(epoch+1))
     
     stop = time.time()
     print("time elapsed: ", stop-start)
