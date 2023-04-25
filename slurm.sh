@@ -11,4 +11,4 @@
 # echo " $SLURM_ARRAY_TASK_ID "
 echo hello_world
 conda activate voiceVAE
-srun python trainingSimple.py
+srun python trainingSimple.py --device=cluster --partial=T
