@@ -39,8 +39,8 @@ MODEL_CONFIG = {}
 # else:
 #     raise AssertionError "wrong datapath"
 
-#DATA_CONFIG = {"DATAPATH" : "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
-DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+DATA_CONFIG = {"DATAPATH" : "../Data/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
+#DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
 
 if __name__ == "__main__":
 
