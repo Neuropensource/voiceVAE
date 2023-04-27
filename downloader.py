@@ -4,7 +4,11 @@ import os
 import numpy as np
 from torch.utils.data import Dataset
 
-
+"""
+Attention
+--> unsqueeze ou non (charly = non)
+--> transpose ou non (charly = non)
+"""
 class SpectroDataset(Dataset):
     """ A custom dataset to load spectrograms """
     def __init__(self, datapath):
@@ -20,6 +24,22 @@ class SpectroDataset(Dataset):
         spectro = torch.from_numpy(spectro)
         return spectro
     
+
+class SpectroDataset4D(SpectroDataset):
+    def __init__(self, datapath):
+        self.path = datapath
+        #super(SpectroDataset4D,self).__init__()
+        
+
+    def __getitem__(self, idx):
+        link = self.path[idx]
+        spectro = np.load(link)
+        #spectro = np.transpose(spectro)
+        spectro = np.expand_dims(spectro, axis=0)
+        spectro = torch.from_numpy(spectro)
+        return spectro
+
+
 
 
 def make_path(folder_path):
