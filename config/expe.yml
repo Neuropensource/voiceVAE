@@ -3,6 +3,9 @@
 # ça ne fait que produire des dictionnaires enchassés !?
 
 Dataset:
+  batch_size: 128
+  spectrogram_dir_name: spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue
+  random_seed: 1234
   #class_name: braindis.data.spectrogram_stream.SpectrogramStream
   #root_path: ../Data/Aligned-CommonVoice-Dataset/CommonVoiceUnifiedBalancedSpeakers/split_random_250
   # subsets_to_load: ['train', 'val', 'test']
@@ -11,10 +14,6 @@ Dataset:
   # scaling: 'standard-freq'
   # load_pair_same_speaker: False
   # num_workers: 10
-  batch_size: 128
-  spectrogram_dir_name: spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue
-  random_seed: 1234
-  
   
 Model:
   class_name: braindis.models.vae_autoencoder.VAEAutoencoder
