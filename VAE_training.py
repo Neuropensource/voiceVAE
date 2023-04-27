@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 import argparse
 import time
+import yaml
 
 #---deep learning imports---
 import torch
@@ -20,13 +21,14 @@ from models.modules.CNNdecoder import vanillaDecoder
 from models.modules.CNNencoder import vanillaEncoder
 from models.vanillaVAE import vanillaVAE
 
-#PARSER
+
+
+#PARSER  --> les arguments qui viennent de la ligne de commande
 parser = argparse.ArgumentParser(description='general parser')
 parser.add_argument("--device", type=str, default="local", help="device to use ('local' or 'cluster')")
 parser.add_argument("--partial", type=bool, default=False, help="use only a part of the dataset")  #required=False
 #recuperation des arguments
 args = parser.parse_args() # à retravailler pour que le partial soit correct
-
 
 #on local machine or on clusterSMS
 if args.device == 'local':
@@ -37,14 +39,15 @@ else:
     raise AssertionError # à revoir comment on utilise ça (les assert et raise)
 
 
+#CONFIG  --> les arguments qui viennent de config files
+config = yaml.load(open("config/expe.yml", "r"), Loader=yaml.FullLoader)
+print(config)
 
 #All informations from config files are stored in the following variables 
 # --> il ne doit plus avoir de constante ici mais que des variables venant d'un yml
 TRAINING_CONFIG = {'prop_train' : 0.8 , } # optimizer, loss, batch_size, epochs, etc.
 MODEL_CONFIG = {'Z_DIM' : 64}
 DATA_CONFIG = {"DATAPATH" : datapath}
-#DATA_CONFIG = {"DATAPATH" : "/data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/"}
-
 
 
 
@@ -61,7 +64,7 @@ if __name__ == "__main__":
     folder_path = DATA_CONFIG["DATAPATH"]
     all_wav = make_path(folder_path)
     if args.partial:
-        all_wav = all_wav[:10000]
+        all_wav = all_wav[:1000]
     np.random.shuffle(all_wav)
     spectros = SpectroDataset4D(all_wav)
     #comprendre pourquoi avec le prop en paramètre ça ne marche pas
@@ -102,7 +105,7 @@ if __name__ == "__main__":
         criterion = nn.MSELoss()
     
     #monitoring
-    writer = SummaryWriter(f"logs/model-{time.asctime()}")
+    writer = SummaryWriter()
     outputs = []
 
 
@@ -124,25 +127,24 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
         #monitoring   
-            cumloss += loss.item()   
+            cumloss += loss.item()  
+        print(f'Epoch:{epoch+1}, Loss:{cumloss/len(data_loader)}') 
         writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
-        print(f'Epoch:{epoch+1}, Loss:{cumloss.item():.4f}')
         outputs.append((epoch, batch, recon))
         
         ### EVAL ###
         #init
         model.eval()
-        val_losses = []
+        cumloss = 0
         #eval
         with torch.no_grad():
             for batch in eval_loader:
                 batch = batch.to(device)
-                loss = model.minibatch_loss(recon,device)
-                val_losses.append(loss)
-        val_loss = torch.mean(torch.stack(val_losses))
+                loss, _ = model.minibatch_loss(recon,device)
         #monitoring
-        print(f'[epoch={epoch+1}] val loss: {val_loss.item()}')
-        writer.add_scalar("loss/val loss", val_loss, epoch)
+                cumloss += loss.item()
+        print(f'[epoch={epoch+1}] val loss: {cumloss/len(eval_loader)}')    
+        writer.add_scalar("loss/val loss", cumloss/len(eval_loader), epoch)
 
     #SAVING MODEL
     torch.save(model.state_dict(), "modelsParam/ep5vanillaVAE.pth".format(epoch+1))

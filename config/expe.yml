@@ -1,0 +1,32 @@
+# Le yml n'est qu'un fichier de configuration d'expérience 
+# qui permet de passer pleins de constantes pour une experience données... 
+# ça ne fait que produire des dictionnaires enchassés !?
+
+Dataset:
+  #class_name: braindis.data.spectrogram_stream.SpectrogramStream
+  #root_path: ../Data/Aligned-CommonVoice-Dataset/CommonVoiceUnifiedBalancedSpeakers/split_random_250
+  # subsets_to_load: ['train', 'val', 'test']
+  # test_train_split: 0.95
+  # val_train_split: 0.05
+  # scaling: 'standard-freq'
+  # load_pair_same_speaker: False
+  # num_workers: 10
+  batch_size: 128
+  spectrogram_dir_name: spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue
+  random_seed: 1234
+  
+  
+Model:
+  class_name: braindis.models.vae_autoencoder.VAEAutoencoder
+  init: 'kaiming_normal'
+  encoder:
+    class_name: braindis.modules.encoders.ConvolutionalEncoder
+    z_dim: 128
+  bottleneck:
+    class_name: braindis.modules.bottlenecks.VariationalBottleneck
+    z_dim: 128
+  reconstructor:
+    class_name: braindis.modules.reconstructors.ConvolutionalDecoder
+    z_dim: 128
+  metric_name: 'mse'
+  beta: 1

@@ -27,8 +27,8 @@ class SpectroDataset(Dataset):
 
 class SpectroDataset4D(SpectroDataset):
     def __init__(self, datapath):
-        self.path = datapath
-        #super(SpectroDataset4D,self).__init__()
+        #self.path = datapath
+        super(SpectroDataset4D,self).__init__(datapath)
         
 
     def __getitem__(self, idx):
