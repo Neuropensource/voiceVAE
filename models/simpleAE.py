@@ -48,3 +48,49 @@ class AE1D(nn.Module):
     def generate(self,x):
         return self.decoder(x)
         
+
+class AE2D(nn.Module):
+    def __init__(self,dimLS,nb_carte = 1):
+        super().__init__()        
+        
+        #(N, 1, 401, 20)
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 16, kernel_size=[30, 5], stride=[4, 2], padding=(1, 0), bias=False),
+            nn.ReLU(),
+            nn.Conv2d(16, 32, kernel_size=[6, 2], stride=[4, 2], padding=(1, 0), bias=False),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=[6, 2], stride=[2, 1], padding=(1, 0), bias=False),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=[6, 2], stride=[2, 1], padding=(1, 0), bias=False),
+            nn.ReLU(),
+            nn.Conv2d(128, dimLS, kernel_size=[6, 2], stride=[1, 1], padding=(1, 0), bias=False),
+            nn.ReLU()
+        )
+        # (N, dimLS, 1, 1)
+
+        
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(dimLS, 128, kernel_size=(27, 3), stride=(1, 1), padding=(1, 0), bias=False),
+            nn.ReLU(),
+            nn.ConvTranspose2d(128, 64, kernel_size=(4, 2), stride=(2, 1), padding=(1, 0), bias=False),
+            nn.ReLU(),
+            nn.ConvTranspose2d(64, 32, kernel_size=(4, 2), stride=(2, 1), padding=(1, 0), bias=False),
+            nn.ReLU(),
+            nn.ConvTranspose2d(32, 16, kernel_size=(4, 2), stride=(2, 2), padding=(1, 0), bias=False),
+            nn.ReLU(),
+            nn.ConvTranspose2d(16, 1, kernel_size=(4, 2), stride=(2, 2), padding=(1, 0), output_padding=[1, 1], bias=False)
+        )
+        #(N, 1, 401, 20)
+        
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+    
+    def encode(self,x):
+        return self.encoder(x)
+    
+    def generate(self,x):
+        return self.decoder(x)
+        
