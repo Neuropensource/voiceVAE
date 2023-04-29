@@ -45,9 +45,14 @@ print(config)
 
 #All informations from config files are stored in the following variables 
 # --> il ne doit plus avoir de constante ici mais que des variables venant d'un yml
-TRAINING_CONFIG = {'prop_train' : 0.8 , } # optimizer, loss, batch_size, epochs, etc.
-MODEL_CONFIG = {'Z_DIM' : 64}
+# TRAINING_CONFIG = {'prop_train' : 0.8 ,'optimizer' : config['Training']['optimizer'] , 
+#                     'loss' :config['Training']['loss'], 'batch_size' : config['batch_size'], 
+#                     'epochs' :config['epochs'],} #  etc.
+# MODEL_CONFIG = {'Z_DIM' : config['Z_DIM'], 'BETA' : config['BETA'], }
+TRAINING_CONFIG = config['Training']
+MODEL_CONFIG = config['Model']
 DATA_CONFIG = {"DATAPATH" : datapath}
+
 
 
 
@@ -85,7 +90,7 @@ if __name__ == "__main__":
     encoder = vanillaEncoder(z_dim= MODEL_CONFIG['Z_DIM'])
     bottleneck = vanillaBottleneck(z_dim= MODEL_CONFIG['Z_DIM'])
     decoder = vanillaDecoder(z_dim= MODEL_CONFIG['Z_DIM'])
-    model = vanillaVAE(encoder, bottleneck, decoder, beta=0)
+    model = vanillaVAE(encoder, bottleneck, decoder, beta= MODEL_CONFIG['beta'])
    
     
 
@@ -147,7 +152,10 @@ if __name__ == "__main__":
         writer.add_scalar("loss/val loss", cumloss/len(eval_loader), epoch)
 
     #SAVING MODEL
-    torch.save(model.state_dict(), "modelsParam/ep5vanillaVAE.pth".format(epoch+1))
+    if args.partial:
+        pass
+    else:
+        torch.save(model.state_dict(), "modelsParam/ep{}vanillaVAE.pth".format(epoch+1))
     
     stop = time.time()
     print("time elapsed: ", stop-start)
