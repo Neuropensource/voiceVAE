@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*- ???
 
+#--config--
+tboard = False
+modelType = 'AE2D'
+
 #---general imports---
 import os 
 import numpy as np
@@ -8,18 +12,20 @@ import argparse
 import time
 
 #---deep learning imports---
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+if tboard:
+    from torch.utils.tensorboard import SummaryWriter
 
 #---local imports---
-from downloader import SpectroDataset, make_path
+from downloader import SpectroDataset, SpectroDataset4D, make_path
 from models.VAEcharly import VAECharly
 from models.modules.bottleneck import VariationalBottleneck
 from models.modules.CNNdecoder import ConvolutionalDecoder
 from models.modules.CNNencoder import ConvolutionalEncoder
-from models.simpleAE import AE1D
+from models.simpleAE import AE1D, AE2D
 
 #PARSER
 parser = argparse.ArgumentParser(description='general parser')
@@ -51,32 +57,47 @@ DATA_CONFIG = {"DATAPATH" : datapath}
 if __name__ == "__main__":
     start = time.time()
     #RECORD FROM THE CLUSTER
-    print("cluster hello-world") 
     #tensorboard, start session, a configurer
     #autres methodes ?
 
     #DATA INITIALIZATION
-    np.random.seed(1234)
+    #separation train/test
     folder_path = DATA_CONFIG["DATAPATH"]
     all_wav = make_path(folder_path)
-    if args.partial:
-        all_wav = all_wav[:10000]
+    np.random.seed(1234)
     np.random.shuffle(all_wav)
-    spectros = SpectroDataset(all_wav) 
-    data_loader = DataLoader(spectros,batch_size=32,shuffle=True)
+    train_wav, test_wav = np.array_split(all_wav,2) # TO DO PROPERLY, on split la liste des chemins en deux listes train et test
+    
+    if args.partial:
+        train_wav = train_wav[:1000]
+        test_wav = test_wav[:100]
+
+    if modelType == 'AE2D':
+        Train_spectros = SpectroDataset4D(train_wav) 
+        Test_spectros = SpectroDataset4D(test_wav)
+    elif modelType == 'AE1D':
+        Train_spectros = SpectroDataset(train_wav) 
+        Test_spectros = SpectroDataset(test_wav)
+    else:
+        raise AssertionError
+    
+    train_loader = DataLoader(Train_spectros,batch_size=32,shuffle=True)
+    test_loader = DataLoader(Test_spectros,batch_size=32,shuffle=True)
 
 
     #MODEL INITIALIZATION
-    # encoder = ConvolutionalEncoder(z_dim=16)
-    # bottleneck = VariationalBottleneck(z_dim=16)
-    # decoder = ConvolutionalDecoder(z_dim=16)
-    # model = VAECharly(encoder, bottleneck, decoder, beta=0, metric_name='mse', init=None)
-    modelAE = AE1D(32)
+    z_dim = 64
+    if modelType == 'AE2D':
+        modelAE = AE2D(z_dim)
+    elif modelType == 'AE1D':
+        modelAE = AE1D(z_dim)
+    else:
+        raise AssertionError
     
 
     
     # TRAINING INITIALIZATION
-    print('nb GPU available : ',torch.cuda.device_count())
+    #print('nb GPU available : ',torch.cuda.device_count())
     #print('nom du GPU utilisé' : torch.cuda.get_device_name(0))
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print('used device =', device)
@@ -90,7 +111,8 @@ if __name__ == "__main__":
     
     
     #TENSORBOARD INITIALIZATION
-    writer = SummaryWriter(f"logs/model-{time.asctime()}")
+    if tboard:
+        writer = SummaryWriter()
     
     #TRAINING LOOP
     for epoch in range(num_epochs):
@@ -99,8 +121,8 @@ if __name__ == "__main__":
         print("Starting epoch {}".format(epoch+1))
         modelAE.train()
         num_batch = 0
-        cumloss = 0
-        for batch in data_loader:
+        train_loss = 0
+        for batch in train_loader:
             batch = batch.to(device)
             recon = modelAE(batch)
             loss = criterion(recon, batch)
@@ -108,28 +130,42 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
             num_batch += 1
-            cumloss += loss.item()
-        #monitoring      
-        writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
-        print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
-        print('torch is using', torch.cuda.device_count(), 'GPUs')
-        outputs.append((epoch, batch, recon))
+            train_loss += loss.item()
+        #monitoring
+            #print('batch number : ', num_batch, 'over', len(train_loader))
+        train_loss = train_loss/len(train_loader)
+        if tboard:  
+            writer.add_scalar("loss/train loss",  train_loss,epoch)
+        print(f'[Epoch:{epoch+1}], train loss:{train_loss}')
+        #print('torch is using', torch.cuda.device_count(), 'GPUs')
+        
         
         #eval
         modelAE.eval()
         val_losses = []
         with torch.no_grad():
-            for batch in data_loader:
-                batch = batch.to(device)
-                loss = criterion(modelAE(batch), batch)
-                val_losses.append(loss)
+            for i,batch in enumerate(test_loader):
+                if i < 50:
+                    batch = batch.to(device)
+                    loss = criterion(modelAE(batch), batch)
+                    val_losses.append(loss)
         val_loss = torch.mean(torch.stack(val_losses))
         #monitoring
-        print(f'[epoch={epoch+1}] val loss: {val_loss.item()}')
-        writer.add_scalar("loss/val loss", val_loss, epoch)
+        print(f'[Epoch={epoch+1}] val loss: {val_loss.item()}')
+        outputs.append((epoch, train_loss, val_loss))
+        if tboard:
+            writer.add_scalar("loss/val loss", val_loss, epoch)
 
         #SAVE MODEL
-        torch.save(modelAE.state_dict(), "modelsParam/ep{}AE1D.pth".format(epoch+1))
+    try:
+        torch.save(modelAE.state_dict(), "modelsParam/{}/ep{}AE1D.pth".format(modelType ,epoch+1))
+    except FileNotFoundError:
+        os.mkdir("modelsParam/{}".format(modelType))
+        torch.save(modelAE.state_dict(), "modelsParam/{}/ep{}AE1D.pth".format(modelType, epoch+1))
+    #save les paths utilisés pour le train et le test
+    np.save("TrainValTest/trainSet.npy",train_wav)
+    np.save("TrainValTest/testSet.npy",test_wav)
+    np.save("log/{}outputs.npy".format(modelType),outputs)
     
     stop = time.time()
     print("time elapsed: ", stop-start)
