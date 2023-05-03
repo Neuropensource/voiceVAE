@@ -156,13 +156,13 @@ if __name__ == "__main__":
         for ydim in grid['ydim']:
         
 
-            with open('expe.yml', 'r') as file:
+            with open(config_file, 'r') as file:
                 config = yaml.load(file, Loader=yaml.FullLoader)
 
             config['Model']['Z_DIM'] = zdim
             config['Model']['ydim'] = ydim
             
-            with open('expe.yml', 'w') as file:
+            with open(config_file, 'w') as file:
                 yaml.dump(config, file)
 
             expe_unit(config_file)
