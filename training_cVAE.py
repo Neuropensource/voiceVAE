@@ -15,11 +15,12 @@ from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
 
 #---local imports---
-from downloader import SpectroDataset4D, make_path
+from downloader import SpectroDataset4D, conditionalDataset, make_path ,get_labels
 from models.modules.bottleneck import vanillaBottleneck
-from models.modules.CNNdecoder import vanillaDecoder
+from models.modules.CNNdecoder import vanillaDecoder, conditionalDecoder
 from models.modules.CNNencoder import vanillaEncoder
 from models.vanillaVAE import vanillaVAE
+from models.cVAE import conditionalVAE
 
 
 
@@ -41,7 +42,6 @@ else:
 
 #CONFIG  --> les arguments qui viennent de config files
 config = yaml.load(open("config/expe.yml", "r"), Loader=yaml.FullLoader)
-print(config)
 
 #All informations from config files are stored in the following variables 
 # --> il ne doit plus avoir de constante ici mais que des variables venant d'un yml
@@ -51,11 +51,14 @@ print(config)
 # MODEL_CONFIG = {'Z_DIM' : config['Z_DIM'], 'BETA' : config['BETA'], }
 TRAINING_CONFIG = config['Training']
 MODEL_CONFIG = config['Model']
+DATASET_CONFIG = config['Dataset']
 DATA_CONFIG = {"DATAPATH" : datapath}
 
 
-#TODO on doit rajouter des conditions pour que le cVAE fonctionne ici aussi 
 
+
+#TODO rajouter un print ou un save de tous les paramètres de l'entrainement qui ont été utilisés
+#--> et l'utiliser pour gérer les folders dans lesquels on save
 if __name__ == "__main__":
     start = time.time()
     #RECORD FROM THE CLUSTER
@@ -66,21 +69,22 @@ if __name__ == "__main__":
     #DATA INITIALIZATION
     np.random.seed(1234)
     #torch.manual_seed(1234)
-    folder_path = DATA_CONFIG["DATAPATH"]
+    folder_path = DATA_CONFIG["DATAPATH"] 
+    pathLabel = '../Data/charly/labels.xlsx'  
+
+    labFile = get_labels(pathLabel)
     all_wav = make_path(folder_path)
     if args.partial:
         all_wav = all_wav[:1000]
     np.random.shuffle(all_wav)
 
-
-    spectros = SpectroDataset4D(all_wav)
-    #TODO IF ICI POUR LE CVAE
     
-        #comprendre pourquoi avec le prop en paramètre ça ne marche pas
-        # prop = TRAINING_CONFIG['prop_train']
-        # train_spectros, eval_spectros= random_split(spectros, [int(len(spectros)*prop) , int(len(spectros)*float(1-prop))])
-    train_spectros, eval_spectros= random_split(spectros, [int(len(spectros)*0.8) , int(len(spectros)*0.2)])
-
+    #split
+    nb_train = int(len(all_wav)*DATASET_CONFIG['prop_train'])
+    train_wav, eval_wav = all_wav[:nb_train], all_wav[nb_train:]
+    train_spectros= conditionalDataset(train_wav,labFile) 
+    eval_spectros = conditionalDataset(eval_wav,labFile) 
+    
     data_loader = DataLoader(train_spectros,batch_size=32,shuffle=True)
     eval_loader = DataLoader(eval_spectros,batch_size=32,shuffle=True)
 
@@ -93,9 +97,9 @@ if __name__ == "__main__":
     '''
     encoder = vanillaEncoder(z_dim= MODEL_CONFIG['Z_DIM'])
     bottleneck = vanillaBottleneck(z_dim= MODEL_CONFIG['Z_DIM'])
-    decoder = vanillaDecoder(z_dim= MODEL_CONFIG['Z_DIM'])
-    model = vanillaVAE(encoder, bottleneck, decoder, beta= MODEL_CONFIG['beta'])
-    #TODO IF ICI POUR LE CVAE
+    decoder = conditionalDecoder(z_dim= MODEL_CONFIG['Z_DIM'], ydim=MODEL_CONFIG['ydim']) 
+    model = conditionalVAE(encoder, bottleneck, decoder, beta= MODEL_CONFIG['beta'])
+    #TODO PARAMETRISER D'AVANTAGE LES MODELES POUR GRIDSEARCH
     
 
     # TRAINING INITIALIZATION
@@ -108,10 +112,9 @@ if __name__ == "__main__":
     
     #model
     model.to(device)
-    num_epochs = 5  #TODO : mettre dans config
+    num_epochs = TRAINING_CONFIG['epochs'] 
+    print("number of epochs : ", num_epochs)
     optimizer = torch.optim.Adam(model.parameters(), betas=[0.5, 0.999], lr=0.00005)  #TODO : mettre dans config
-    if False: #si le model n'a pas de loss définie
-        criterion = nn.MSELoss()
     
     #monitoring
     writer = SummaryWriter()
@@ -127,11 +130,10 @@ if __name__ == "__main__":
         cumloss = 0
         #reweighting
         for batch in tqdm(data_loader):
-            batch = batch.to(device)     #TODO : particulier pour cVAE
-            results = model(batch)
+            batchSpectro, batchLoc = batch[0].to(device), batch[1].to(device)     
+            results = model(batchSpectro, batchLoc)
             recon = results['logits']
-            loss, details = model.minibatch_loss(batch=batch, device= device) #TODO : particulier pour cVAE
-            # loss = criterion(recon, batch) --> pour un AE dont la loss peut ne pas être définie dans le modèle
+            loss, details = model.minibatch_loss(batch=batchSpectro, device= device, y= batchLoc) 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -139,7 +141,7 @@ if __name__ == "__main__":
             cumloss += loss.item()  
         print(f'Epoch:{epoch+1}, Loss:{cumloss/len(data_loader)}') 
         writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
-        outputs.append((epoch, batch, recon))
+        outputs.append((epoch, batchSpectro, recon))
         
         ### EVAL ###
         #init
@@ -148,21 +150,26 @@ if __name__ == "__main__":
         #eval
         with torch.no_grad():
             for batch in eval_loader: #TODO : particulier pour cVAE
-                batch = batch.to(device)
-                loss, _ = model.minibatch_loss(recon,device) #TODO : particulier pour cVAE
+                batchSpectro, batchLoc = batch[0].to(device), batch[1].to(device)  #TODO il y a une erreur dans le trainingVAE à corriger "recon" c'est pour ça qu'on avait loss bizarre
+                recon = model(batchSpectro, batchLoc)['logits']
+                loss, _ = model.minibatch_loss(recon,device,y=batchLoc) 
         #monitoring
                 cumloss += loss.item()
         print(f'[epoch={epoch+1}] val loss: {cumloss/len(eval_loader)}')    
         writer.add_scalar("loss/val loss", cumloss/len(eval_loader), epoch)
 
 
-    #TODO RAMENEZ LES TENSEURS AU CPU AVANT DE LES SAUVER
+    #RAMENEZ LES TENSEURS AU CPU AVANT DE LES SAUVER
     model.to('cpu')
     #SAVING MODEL
     if args.partial:
         pass
     else:
-        torch.save(model.state_dict(), "modelsParam/ep{}vanillaVAE.pth".format(epoch+1))
+        pass
+    torch.save(model.state_dict(), "modelsParam/cVAE/cVAEep{}zdim{}ydim{}.pth".format(epoch+1,MODEL_CONFIG['Z_DIM'], MODEL_CONFIG['ydim']))
+    np.save("TrainValTest/trainSet.npy",train_wav)
+    np.save("TrainValTest/testSet.npy",eval_wav)
+        
     
     stop = time.time()
     print("time elapsed: ", stop-start)

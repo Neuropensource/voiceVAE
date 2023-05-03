@@ -5,6 +5,7 @@
 Dataset:
   spectrogram_dir_name: spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue
   random_seed: 1234
+  prop_train: 0.8
   #class_name: braindis.data.spectrogram_stream.SpectrogramStream
   #root_path: ../Data/Aligned-CommonVoice-Dataset/CommonVoiceUnifiedBalancedSpeakers/split_random_250
   # subsets_to_load: ['train', 'val', 'test']
@@ -16,15 +17,14 @@ Dataset:
 
 Training: 
   optimizer: 
-  epochs: 
+  epochs: 10
   batch_size: 128
-
-  
-  
+ 
 Model:
-  beta: 1
+  beta: 0
   loss: 'mse'
   Z_DIM: 128
+  ydim : 10
   
 
   # class_name: braindis.models.vae_autoencoder.VAEAutoencoder
