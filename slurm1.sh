@@ -2,7 +2,7 @@
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=1
 #SBATCH --job-name="cVAE"
 #SBATCH --time=24:00:00
@@ -12,4 +12,6 @@
 
 echo hello_world
 conda activate voiceVAE
-srun python training_cVAE.py --device=cluster
+srun python main.py --device=cluster
+
+#SBATCH --exclude=lifnode1,asfalda1,sensei1,lisnode3,diflives1,see4c1
