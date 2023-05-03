@@ -70,7 +70,10 @@ if __name__ == "__main__":
     np.random.seed(1234)
     #torch.manual_seed(1234)
     folder_path = DATA_CONFIG["DATAPATH"] 
-    pathLabel = '../Data/charly/labels.xlsx'  
+    if args.device == 'local':
+        pathLabel = '../Data/charly/labels.xlsx'  
+    elif args.device == 'cluster':
+        pathLabel = '/data1/data/expes/hippolyte.dreyfus/charly/labels.xlsx'
 
     labFile = get_labels(pathLabel)
     all_wav = make_path(folder_path)
