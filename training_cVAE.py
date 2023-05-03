@@ -75,7 +75,7 @@ if __name__ == "__main__":
     labFile = get_labels(pathLabel)
     all_wav = make_path(folder_path)
     if args.partial:
-        all_wav = all_wav[:1000]
+        all_wav = all_wav[:100]
     np.random.shuffle(all_wav)
 
     
@@ -165,10 +165,9 @@ if __name__ == "__main__":
     if args.partial:
         pass
     else:
-        pass
-    torch.save(model.state_dict(), "modelsParam/cVAE/cVAEep{}zdim{}ydim{}.pth".format(epoch+1,MODEL_CONFIG['Z_DIM'], MODEL_CONFIG['ydim']))
-    np.save("TrainValTest/trainSet.npy",train_wav)
-    np.save("TrainValTest/testSet.npy",eval_wav)
+        torch.save(model.state_dict(), "modelsParam/cVAE/cVAEep{}zdim{}ydim{}.pth".format(epoch+1,MODEL_CONFIG['Z_DIM'], MODEL_CONFIG['ydim']))
+        np.save("TrainValTest/trainSet.npy",train_wav)
+        np.save("TrainValTest/testSet.npy",eval_wav)
         
     
     stop = time.time()
