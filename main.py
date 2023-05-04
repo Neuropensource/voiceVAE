@@ -33,7 +33,7 @@ from models.cVAE import conditionalVAE
 #---config file modifier---
 from config.configuration import ConfigFileModifier
 #utilisation de gridsearchCV ? rayTune ? Optuna ? 
-from sklearn.model_selection import GridSearchCV
+#from sklearn.model_selection import GridSearchCV
 
 
 
