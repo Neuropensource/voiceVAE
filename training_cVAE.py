@@ -12,7 +12,8 @@ import yaml
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
-from torch.utils.tensorboard import SummaryWriter
+
+#from torch.utils.tensorboard import SummaryWriter
 
 #---local imports---
 from downloader import SpectroDataset4D, conditionalDataset, make_path ,get_labels
@@ -118,7 +119,7 @@ if __name__ == "__main__":
     print("number of epochs : ", num_epochs)
     optimizer = torch.optim.Adam(model.parameters(), betas=[0.5, 0.999], lr=TRAINING_CONFIG['lr']) 
     #monitoring
-    writer = SummaryWriter()
+    #writer = SummaryWriter()
     train_loss=[]
     val_loss=[]
 
@@ -141,7 +142,7 @@ if __name__ == "__main__":
         #monitoring   
             cumloss += loss.item()  
         print(f'Epoch:{epoch+1}, Loss:{cumloss/len(data_loader)}') 
-        writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
+        #writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
         train_loss.append(cumloss/len(data_loader),epoch)
         
         ### EVAL ###
@@ -157,7 +158,7 @@ if __name__ == "__main__":
         #monitoring
                 cumloss += loss.item()
         print(f'[epoch={epoch+1}] val loss: {cumloss/len(eval_loader)}')    
-        writer.add_scalar("loss/val loss", cumloss/len(eval_loader), epoch)
+        #writer.add_scalar("loss/val loss", cumloss/len(eval_loader), epoch)
         val_loss.append(cumloss/len(eval_loader))
 
         #checkpoint saving
