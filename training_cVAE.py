@@ -112,17 +112,15 @@ if __name__ == "__main__":
     print('nb GPU available : ',torch.cuda.device_count())
     if torch.cuda.device_count() > 0:
         print('nom du GPU utilisé :' , torch.cuda.get_device_name(0))
-    
     #model
     model.to(device)
     num_epochs = TRAINING_CONFIG['epochs'] 
     print("number of epochs : ", num_epochs)
-    optimizer = torch.optim.Adam(model.parameters(), betas=[0.5, 0.999], lr=0.00005)  #TODO : mettre dans config
-    
+    optimizer = torch.optim.Adam(model.parameters(), betas=[0.5, 0.999], lr=TRAINING_CONFIG['lr']) 
     #monitoring
     writer = SummaryWriter()
-    outputs = []
-
+    train_loss=[]
+    val_loss=[]
 
     #TRAINING LOOP
     for epoch in range(num_epochs):
@@ -144,7 +142,7 @@ if __name__ == "__main__":
             cumloss += loss.item()  
         print(f'Epoch:{epoch+1}, Loss:{cumloss/len(data_loader)}') 
         writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
-        outputs.append((epoch, batchSpectro, recon))
+        train_loss.append(cumloss/len(data_loader),epoch)
         
         ### EVAL ###
         #init
@@ -160,7 +158,12 @@ if __name__ == "__main__":
                 cumloss += loss.item()
         print(f'[epoch={epoch+1}] val loss: {cumloss/len(eval_loader)}')    
         writer.add_scalar("loss/val loss", cumloss/len(eval_loader), epoch)
+        val_loss.append(cumloss/len(eval_loader))
 
+        #checkpoint saving
+        if not args.partial:
+            if epoch % 10 == 0 or epoch == 0:
+                torch.save(model.state_dict(), "modelsParam/cVAE/cVAEep{}zdim{}ydim{}.pth".format(epoch+1,MODEL_CONFIG['Z_DIM'], MODEL_CONFIG['ydim']))
 
     #RAMENEZ LES TENSEURS AU CPU AVANT DE LES SAUVER
     model.to('cpu')
@@ -171,6 +174,8 @@ if __name__ == "__main__":
         torch.save(model.state_dict(), "modelsParam/cVAE/cVAEep{}zdim{}ydim{}.pth".format(epoch+1,MODEL_CONFIG['Z_DIM'], MODEL_CONFIG['ydim']))
         np.save("TrainValTest/trainSet.npy",train_wav)
         np.save("TrainValTest/testSet.npy",eval_wav)
+        #TODO non ! on ne doit pas sauver après mais plutôt charger avant des train/val/test set déjà formés
+        
         
     
     stop = time.time()

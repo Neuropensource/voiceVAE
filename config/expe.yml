@@ -1,14 +1,18 @@
+#Ce fichier est utilisé pour les gridsearch et les entrainements multiples
+
 Dataset:
   datapath: /data1/data/expes/hippolyte.dreyfus/charly/spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue/
   pathLabel: /data1/data/expes/hippolyte.dreyfus/charly/labels.xlsx
   prop_train: 0.8
   random_seed: 1234
   spectrogram_dir_name: spectrograms_win800_fra200_rFalse_nfft800_nmelsNone_amptodbTrue
+
 Model:
   Z_DIM: 128
   beta: 0
   loss: mse
   ydim: 100
+
 Training:
   batch_size: 64
   epochs: 10
