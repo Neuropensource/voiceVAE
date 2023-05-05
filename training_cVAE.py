@@ -42,7 +42,7 @@ else:
 
 
 #CONFIG  --> les arguments qui viennent de config files
-config = yaml.load(open("config/expe.yml", "r"), Loader=yaml.FullLoader)
+config = yaml.load(open("config/base.yml", "r"), Loader=yaml.FullLoader)
 
 #All informations from config files are stored in the following variables 
 # --> il ne doit plus avoir de constante ici mais que des variables venant d'un yml
