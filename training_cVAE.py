@@ -143,7 +143,7 @@ if __name__ == "__main__":
             cumloss += loss.item()  
         print(f'Epoch:{epoch+1}, Loss:{cumloss/len(data_loader)}') 
         #writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
-        train_loss.append(cumloss/len(data_loader),epoch)
+        train_loss.append(cumloss/len(data_loader))
         
         ### EVAL ###
         #init
