@@ -21,7 +21,6 @@ if __name__ == "__main__":
     np.random.shuffle(all_wav)
 
     #si l'on veut lancer un petit entrainenement
-    all_wav = all_wav[:1000]
 
     spectros = SpectroDataset(all_wav) 
 

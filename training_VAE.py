@@ -12,7 +12,7 @@ import yaml
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 
 #---local imports---
 from downloader import SpectroDataset4D, make_path
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         criterion = nn.MSELoss()
     
     #monitoring
-    writer = SummaryWriter()
+    #writer = SummaryWriter()
     outputs = []
 
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
         #monitoring   
             cumloss += loss.item()  
         print(f'Epoch:{epoch+1}, Loss:{cumloss/len(data_loader)}') 
-        writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
+        #writer.add_scalar("loss/train loss",  cumloss/len(data_loader),epoch)
         outputs.append((epoch, batch, recon))
         
         ### EVAL ###
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         #monitoring
                 cumloss += loss.item()
         print(f'[epoch={epoch+1}] val loss: {cumloss/len(eval_loader)}')    
-        writer.add_scalar("loss/val loss", cumloss/len(eval_loader), epoch)
+        #writer.add_scalar("loss/val loss", cumloss/len(eval_loader), epoch)
 
 
     #TODO RAMENEZ LES TENSEURS AU CPU AVANT DE LES SAUVER
