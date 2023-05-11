@@ -11,6 +11,6 @@
 
 echo hello_world
 conda activate torch_cuda11_charly
-srun python training_cVAE.py --device=cluster
+srun python training_cVAE.py --device=cluster 
 
 #--exclude=lifnode1,asfalda1,sensei1,lisnode3,diflives1,see4c1
