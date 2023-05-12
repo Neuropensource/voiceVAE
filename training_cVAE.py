@@ -162,6 +162,8 @@ if __name__ == "__main__":
         val_loss.append(cumloss/len(eval_loader))
 
         #checkpoint saving
+        np.save("log/val_loss.npy", val_loss)
+        np.save("log/train_loss.npy", train_loss)
         if not args.partial:
             if epoch % 10 == 0 or epoch == 0:
                 torch.save(model.state_dict(), "modelsParam/cVAE/cVAEep{}zdim{}ydim{}.pth".format(epoch+1,MODEL_CONFIG['Z_DIM'], MODEL_CONFIG['ydim']))
