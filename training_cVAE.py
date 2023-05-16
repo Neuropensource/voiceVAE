@@ -56,8 +56,14 @@ DATASET_CONFIG = config['Dataset']
 DATA_CONFIG = {"DATAPATH" : datapath}
 
 
+def summary_conf(training,model,dataset):
+   print("RUNNING EXPE WITH FOLLOWING CONFIG :")
+   print('\n')
+   print(training) 
+   print(model)
+   print(dataset)
 
-
+summary_conf(TRAINING_CONFIG,MODEL_CONFIG,DATASET_CONFIG)
 #TODO rajouter un print ou un save de tous les paramètres de l'entrainement qui ont été utilisés
 #--> et l'utiliser pour gérer les folders dans lesquels on save
 if __name__ == "__main__":
@@ -162,8 +168,10 @@ if __name__ == "__main__":
         val_loss.append(cumloss/len(eval_loader))
 
         #checkpoint saving
+        
         if not args.partial:
             if epoch % 10 == 0 or epoch == 0:
+                print('HOLA WE SAVE')
                 torch.save(model.state_dict(), "modelsParam/cVAE/cVAEep{}zdim{}ydim{}.pth".format(epoch+1,MODEL_CONFIG['Z_DIM'], MODEL_CONFIG['ydim']))
 
     #RAMENEZ LES TENSEURS AU CPU AVANT DE LES SAUVER
