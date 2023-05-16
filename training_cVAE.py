@@ -168,7 +168,8 @@ if __name__ == "__main__":
         val_loss.append(cumloss/len(eval_loader))
 
         #checkpoint saving
-        
+        np.save("log/val_loss.npy", val_loss)
+        np.save("log/train_loss.npy", train_loss)
         if not args.partial:
             if epoch % 10 == 0 or epoch == 0:
                 print('HOLA WE SAVE')
